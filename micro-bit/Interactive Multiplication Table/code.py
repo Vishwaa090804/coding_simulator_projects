@@ -1,5 +1,4 @@
 # Python code
-#
 N = 0
 k = 0
 sign = 0
