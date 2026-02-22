@@ -319,14 +319,15 @@
         
         .safety-ribbon { 
             position: absolute; 
-            bottom: 120px; 
+            bottom: 130px; 
             left: 20px; 
             background: #ffd966ee; 
-            padding: 6px 20px; 
+            padding: 8px 24px; 
             border-radius: 40px; 
             font-weight: bold; 
-            z-index: 25; 
+            z-index: 50; 
             border: 2px solid #b1610e; 
+            white-space: nowrap;
         }
         
         /* Bouncing animation for food labels */
@@ -351,42 +352,32 @@
             animation-play-state: paused;
         }
         
-        /* Tooltip styles - improved */
+        /* Hover bubble – translucent white rounded rectangle, emoji only (no name) */
         .food-tooltip {
-            position: absolute;
-            background: linear-gradient(135deg, rgba(45, 62, 80, 0.95), rgba(30, 45, 60, 0.95));
-            color: white;
-            padding: 10px 16px;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: bold;
+            position: fixed;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 56px;
+            height: 56px;
+            background: rgba(255, 255, 255, 0.88);
+            border-radius: 16px;
+            font-size: 36px;
+            line-height: 1;
             pointer-events: none;
             z-index: 1000;
-            white-space: nowrap;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4), 0 0 0 2px rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(255, 255, 255, 0.9);
             opacity: 0;
-            transition: opacity 0.25s ease, transform 0.25s ease;
-            transform: translateY(-5px);
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            backdrop-filter: blur(8px);
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            transform: translate(-50%, 8px);
+            backdrop-filter: blur(10px);
+            left: 0;
+            top: 0;
         }
         
         .food-tooltip.show {
             opacity: 1;
-            transform: translateY(0);
-        }
-        
-        .food-tooltip::after {
-            content: '';
-            position: absolute;
-            bottom: -8px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 0;
-            height: 0;
-            border-left: 8px solid transparent;
-            border-right: 8px solid transparent;
-            border-top: 8px solid rgba(30, 45, 60, 0.95);
+            transform: translate(-50%, 0);
         }
     </style>
 </head>
@@ -610,7 +601,7 @@
             // Add hover event listeners for tooltip
             const tooltip = document.createElement('div');
             tooltip.className = 'food-tooltip';
-            tooltip.textContent = food.name;
+            tooltip.textContent = food.emoji;
             document.body.appendChild(tooltip);
             
             div.addEventListener('mouseenter', (e) => {
@@ -654,47 +645,30 @@
             const x = (vector.x * 0.5 + 0.5) * rect.width + rect.left;
             const y = (-vector.y * 0.5 + 0.5) * rect.height + rect.top;
             
-            // Position tooltip right above the object (not at cursor)
-            const offsetY = -60; // Above the object
-            const offsetX = 0; // Centered on object
-            
-            let tooltipX = x + offsetX;
+            // Position bubble centered above the food (bubble uses transform: translate(-50%, 0))
+            const offsetY = -55;
+            let tooltipX = x;
             let tooltipY = y + offsetY;
-            
-            // Keep tooltip within viewport
-            const tooltipWidth = 200;
-            const tooltipHeight = 50;
-            
-            if (tooltipX + tooltipWidth > window.innerWidth) {
-                tooltipX = x - tooltipWidth;
-            }
-            if (tooltipX < 0) tooltipX = 10;
-            if (tooltipY < 0) tooltipY = y + 50; // Show below if too high
-            
+            const bubbleSize = 56;
+            if (tooltipX - bubbleSize / 2 < 10) tooltipX = 10 + bubbleSize / 2;
+            if (tooltipX + bubbleSize / 2 > window.innerWidth - 10) tooltipX = window.innerWidth - 10 - bubbleSize / 2;
+            if (tooltipY - bubbleSize / 2 < 10) tooltipY = 10 + bubbleSize / 2;
+            if (tooltipY + bubbleSize / 2 > window.innerHeight - 10) tooltipY = window.innerHeight - 10 - bubbleSize / 2;
             tooltip.style.left = tooltipX + 'px';
             tooltip.style.top = tooltipY + 'px';
         }
         
         function updateTooltipPosition(tooltip, event) {
             // For label tooltips, use cursor position but closer
-            const offsetX = 10;
+            const offsetX = 0;
             const offsetY = -50;
             let x = event.clientX + offsetX;
             let y = event.clientY + offsetY;
-            
-            // Keep tooltip within viewport
-            const tooltipWidth = 200;
-            const tooltipHeight = 50;
-            
-            if (x + tooltipWidth > window.innerWidth) {
-                x = event.clientX - tooltipWidth - offsetX;
-            }
-            if (y + tooltipHeight > window.innerHeight) {
-                y = event.clientY - tooltipHeight - offsetY;
-            }
-            if (x < 0) x = 10;
-            if (y < 0) y = 10;
-            
+            const bubbleSize = 56;
+            if (x - bubbleSize / 2 < 10) x = 10 + bubbleSize / 2;
+            if (x + bubbleSize / 2 > window.innerWidth - 10) x = window.innerWidth - 10 - bubbleSize / 2;
+            if (y - bubbleSize / 2 < 10) y = 10 + bubbleSize / 2;
+            if (y + bubbleSize / 2 > window.innerHeight - 10) y = window.innerHeight - 10 - bubbleSize / 2;
             tooltip.style.left = x + 'px';
             tooltip.style.top = y + 'px';
         }
@@ -1141,7 +1115,6 @@
             // Include children for groups (like milk glass)
             const intersects = raycaster.intersectObjects(foodMeshes, true);
             
-            // Hide previous tooltip
             if (hoveredMesh && hoveredMesh.userData && hoveredMesh.userData.tooltip) {
                 hoveredMesh.userData.tooltip.classList.remove('show');
             }
@@ -1168,7 +1141,6 @@
                     hoveredMesh = hitObject;
                     if (hoveredMesh.userData.tooltip) {
                         hoveredMesh.userData.tooltip.classList.add('show');
-                        // Position tooltip based on 3D object position, not cursor
                         updateTooltipPositionFromMesh(hoveredMesh.userData.tooltip, hoveredMesh, event);
                     }
                 } else {
@@ -1201,6 +1173,11 @@
                 const isMilk = foods[i].name.includes('milk');
                 mesh.position.y = baseY + (isMilk ? 0.45 : 0) + Math.sin(time + i) * 0.04;
             });
+            
+            // Keep hover bubble under the hovered food (follows floating animation)
+            if (hoveredMesh && hoveredMesh.userData.tooltip && hoveredMesh.userData.tooltip.classList.contains('show')) {
+                updateTooltipPositionFromMesh(hoveredMesh.userData.tooltip, hoveredMesh, null);
+            }
             
             controls.update();
             renderer.render(scene, camera);
